@@ -1,0 +1,73 @@
+package com.support.orchestrator;
+
+import com.support.claude.ClaudeClient;
+import com.support.claude.ClaudeResponse;
+import com.support.conversation.ConversationSession;
+import com.support.conversation.Message;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Classifies each user message into one of three routes:
+ *   "technical"    — technical errors, API, configuration, setup
+ *   "billing"      — payments, invoices, refunds, subscription plans
+ *   "out_of_scope" — anything else
+ *
+ * Uses a cheap, constrained Claude call (~10 tokens response).
+ * Operates on a SEPARATE minimal message list — never reads from or
+ * writes to the shared ConversationSession history.
+ */
+public class RouterClassifier {
+
+    private static final String SYSTEM_PROMPT =
+        "You are a message routing classifier for a software support service.\n\n" +
+        "Classify the user's message into exactly one of these categories:\n" +
+        "- technical: questions about errors, API usage, configuration, setup, integration, or troubleshooting\n" +
+        "- billing: questions about payments, invoices, refunds, subscription plans, or billing history\n" +
+        "- out_of_scope: anything unrelated to technical support or billing\n\n" +
+        "Respond with EXACTLY one word: technical, billing, or out_of_scope.\n" +
+        "No explanation, no punctuation, no extra text.";
+
+    private final ClaudeClient claudeClient;
+
+    public RouterClassifier(ClaudeClient claudeClient) {
+        this.claudeClient = claudeClient;
+    }
+
+    /**
+     * Classifies the current user message using up to the last 2 messages
+     * from history for context (helps with follow-up questions).
+     *
+     * @return "technical", "billing", or "out_of_scope"
+     */
+    public String classify(String userMessage, ConversationSession session) {
+        // Build a minimal message list — do not modify shared history
+        List<Message> allMessages = session.getHistory().getMessages();
+        List<Message> classifierMessages = new ArrayList<>();
+
+        // Include the previous assistant message (if any) for follow-up context,
+        // then the current user message (always last in shared history)
+        int size = allMessages.size();
+        if (size >= 2) {
+            classifierMessages.add(allMessages.get(size - 2)); // previous assistant turn
+        }
+        classifierMessages.add(allMessages.get(size - 1)); // current user message
+
+        ClaudeResponse response = claudeClient.sendMessage(
+            SYSTEM_PROMPT,
+            classifierMessages,
+            null,
+            10  // only needs one word
+        );
+
+        String classification = response.getFirstTextContent();
+        if (classification == null) return "out_of_scope";
+
+        classification = classification.trim().toLowerCase();
+        return switch (classification) {
+            case "technical", "billing" -> classification;
+            default -> "out_of_scope";
+        };
+    }
+}
