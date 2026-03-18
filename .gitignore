@@ -1,0 +1,15 @@
+# API key — never commit this
+config.properties
+
+# Maven build output
+target/
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# IDE files
+*.code-workspace
+.idea/
+*.iml
+.vscode/
