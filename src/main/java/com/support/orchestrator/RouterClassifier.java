@@ -65,9 +65,27 @@ public class RouterClassifier {
         if (classification == null) return "out_of_scope";
 
         classification = classification.trim().toLowerCase();
-        return switch (classification) {
+        classification = switch (classification) {
             case "technical", "billing" -> classification;
             default -> "out_of_scope";
         };
+
+        // Fallback: short messages with no topic keywords (e.g. "No", "Yes", "Ok")
+        // stay with the last active agent instead of triggering the out-of-scope wall.
+        if ("out_of_scope".equals(classification) && isShortMessage(userMessage)) {
+            String lastAgent = session.getLastActiveAgent();
+            if (lastAgent != null) return lastAgent;
+        }
+
+        return classification;
+    }
+
+    private boolean isShortMessage(String message) {
+        // Strip the XML wrapper added by ConversationCLI before measuring length
+        String stripped = message
+            .replace("<user_input>", "")
+            .replace("</user_input>", "")
+            .trim();
+        return stripped.length() <= 10;
     }
 }
