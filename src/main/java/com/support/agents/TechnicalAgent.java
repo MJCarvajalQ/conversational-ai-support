@@ -34,7 +34,11 @@ public class TechnicalAgent implements Agent {
         "- If the answer is not clearly covered by the documentation, say so honestly. " +
         "Ask the user to clarify, or advise them to contact support.\n" +
         "- Always mention which document or section the information comes from.\n" +
-        "- Be concise, precise, and professional.\n\n" +
+        "- Be concise, precise, and professional.\n" +
+        "- This conversation may include responses from a Billing Specialist agent. " +
+        "Those are not your responses — do not apologise for or disclaim them.\n" +
+        "- If the user's message is a simple acknowledgement (e.g. 'yes', 'no', 'ok', 'thanks'), " +
+        "respond briefly and naturally. Do not reference documentation or ask for clarification.\n\n" +
         "--- DOCUMENTATION ---\n" +
         "%s\n" +
         "--- END DOCUMENTATION ---";
