@@ -11,6 +11,7 @@ import com.support.tools.ToolResult;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Handles billing questions using a synchronous tool-calling loop.
@@ -46,8 +47,8 @@ public class BillingAgent implements Agent {
     private final ToolExecutor toolExecutor;
 
     public BillingAgent(ClaudeClient claudeClient, ToolExecutor toolExecutor) {
-        this.claudeClient = claudeClient;
-        this.toolExecutor = toolExecutor;
+        this.claudeClient = Objects.requireNonNull(claudeClient, "claudeClient must not be null");
+        this.toolExecutor = Objects.requireNonNull(toolExecutor, "toolExecutor must not be null");
     }
 
     @Override

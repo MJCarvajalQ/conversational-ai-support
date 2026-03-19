@@ -7,6 +7,7 @@ import com.support.conversation.Message;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Classifies each user message into one of three routes:
@@ -32,7 +33,7 @@ public class RouterClassifier {
     private final ClaudeClient claudeClient;
 
     public RouterClassifier(ClaudeClient claudeClient) {
-        this.claudeClient = claudeClient;
+        this.claudeClient = Objects.requireNonNull(claudeClient, "claudeClient must not be null");
     }
 
     /**

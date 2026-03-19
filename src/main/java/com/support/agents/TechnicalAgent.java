@@ -7,6 +7,7 @@ import com.support.rag.DocumentChunk;
 import com.support.rag.VectorStore;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Answers technical questions strictly from the loaded documentation.
@@ -40,8 +41,8 @@ public class TechnicalAgent implements Agent {
     private final VectorStore vectorStore;
 
     public TechnicalAgent(ClaudeClient claudeClient, VectorStore vectorStore) {
-        this.claudeClient = claudeClient;
-        this.vectorStore = vectorStore;
+        this.claudeClient = Objects.requireNonNull(claudeClient, "claudeClient must not be null");
+        this.vectorStore = Objects.requireNonNull(vectorStore, "vectorStore must not be null");
     }
 
     @Override

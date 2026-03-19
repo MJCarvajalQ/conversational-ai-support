@@ -3,6 +3,7 @@ package com.support.orchestrator;
 import com.support.agents.Agent;
 import com.support.conversation.ConversationSession;
 import com.support.conversation.Message;
+import java.util.Objects;
 
 /**
  * Central coordinator for each conversation turn.
@@ -28,9 +29,9 @@ public class Orchestrator {
     private final Agent billingAgent;
 
     public Orchestrator(RouterClassifier router, Agent technicalAgent, Agent billingAgent) {
-        this.router = router;
-        this.technicalAgent = technicalAgent;
-        this.billingAgent = billingAgent;
+        this.router = Objects.requireNonNull(router, "router must not be null");
+        this.technicalAgent = Objects.requireNonNull(technicalAgent, "technicalAgent must not be null");
+        this.billingAgent = Objects.requireNonNull(billingAgent, "billingAgent must not be null");
     }
 
     /**

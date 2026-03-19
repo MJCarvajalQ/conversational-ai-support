@@ -5,6 +5,7 @@ import com.support.config.AppConfig;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * In-memory store of embedded DocumentChunks.
@@ -16,7 +17,7 @@ public class VectorStore {
     private final EmbeddingService embeddingService;
 
     public VectorStore(EmbeddingService embeddingService) {
-        this.embeddingService = embeddingService;
+        this.embeddingService = Objects.requireNonNull(embeddingService, "embeddingService must not be null");
     }
 
     public void addChunk(DocumentChunk chunk) {
