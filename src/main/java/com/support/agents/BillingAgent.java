@@ -61,42 +61,19 @@ public class BillingAgent implements Agent {
     @Override
     public String handle(String userMessage, ConversationSession session) {
         logger.info("BillingAgent handling turn (iteration cap: " + AppConfig.MAX_TOOL_ITERATIONS + ")");
-        // Start working history from the shared session history.
-        // The session history already ends with the user message (added by Orchestrator).
-        List<Message> workingHistory = new ArrayList<>(session.getHistory().getMessages());
+        List<Message> workingHistory = buildWorkingHistory(session);
         List<java.util.Map<String, Object>> toolSchemas = toolExecutor.getToolSchemas();
 
         for (int i = 0; i < AppConfig.MAX_TOOL_ITERATIONS; i++) {
             ClaudeResponse response = claudeClient.sendMessage(
-                SYSTEM_PROMPT,
-                workingHistory,
-                toolSchemas,
-                AppConfig.AGENT_MAX_TOKENS
+                SYSTEM_PROMPT, workingHistory, toolSchemas, AppConfig.AGENT_MAX_TOKENS
             );
 
             if (response.isToolUse()) {
-                // Add the assistant's tool_use response to working history
-                workingHistory.add(new Message(ROLE_ASSISTANT, response.getContent()));
-
-                // Execute each tool call and collect results
-                List<ContentBlock> toolResults = new ArrayList<>();
-                for (ContentBlock block : response.getContent()) {
-                    if (CONTENT_TYPE_TOOL_USE.equals(block.getType())) {
-                        logger.fine("Tool call: " + block.getName() + " | input: " + block.getInput());
-                        ToolResult result = toolExecutor.execute(block.getName(), block.getInput());
-                        logger.fine("Tool result: " + result.getContent());
-                        toolResults.add(ContentBlock.toolResult(block.getId(), result.getContent()));
-                    }
-                }
-
-                // Add tool results as a user message to working history
-                workingHistory.add(new Message(ROLE_USER, toolResults));
-
+                executeToolCalls(response, workingHistory);
             } else {
-                // stop_reason == "end_turn" — extract the final text response
-                String finalResponse = response.getFirstTextContent();
-                if (finalResponse == null || finalResponse.isBlank()) {
-                    logger.warning("Empty final response from Claude in BillingAgent.");
+                String finalResponse = extractFinalResponse(response);
+                if (finalResponse == null) {
                     return "I was unable to complete your billing request. Please try again.";
                 }
                 return finalResponse;
@@ -106,5 +83,38 @@ public class BillingAgent implements Agent {
         logger.warning("Max tool iterations reached without end_turn response.");
         return "I was unable to complete your request within the allowed steps. " +
                "Please contact our support team directly for assistance.";
+    }
+
+    // Start working history from the shared session history.
+    // The session history already ends with the user message (added by Orchestrator).
+    private List<Message> buildWorkingHistory(ConversationSession session) {
+        return new ArrayList<>(session.getHistory().getMessages());
+    }
+
+    // Appends the assistant tool_use message, executes each tool, and appends the results.
+    private void executeToolCalls(ClaudeResponse response, List<Message> workingHistory) {
+        workingHistory.add(new Message(ROLE_ASSISTANT, response.getContent()));
+
+        List<ContentBlock> toolResults = new ArrayList<>();
+        for (ContentBlock block : response.getContent()) {
+            if (CONTENT_TYPE_TOOL_USE.equals(block.getType())) {
+                logger.fine("Tool call: " + block.getName() + " | input: " + block.getInput());
+                ToolResult result = toolExecutor.execute(block.getName(), block.getInput());
+                logger.fine("Tool result: " + result.getContent());
+                toolResults.add(ContentBlock.toolResult(block.getId(), result.getContent()));
+            }
+        }
+
+        workingHistory.add(new Message(ROLE_USER, toolResults));
+    }
+
+    // Returns the final text response, or null if blank (with a warning log).
+    private String extractFinalResponse(ClaudeResponse response) {
+        String text = response.getFirstTextContent();
+        if (text == null || text.isBlank()) {
+            logger.warning("Empty final response from Claude in BillingAgent.");
+            return null;
+        }
+        return text;
     }
 }

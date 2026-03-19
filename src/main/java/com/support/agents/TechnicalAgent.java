@@ -9,6 +9,7 @@ import com.support.rag.VectorStore;
 import com.support.config.AppConfig;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 /**
  * Answers technical questions strictly from the loaded documentation.
@@ -38,6 +39,8 @@ public class TechnicalAgent implements Agent {
         "%s\n" +
         "--- END DOCUMENTATION ---";
 
+    private static final Logger logger = Logger.getLogger(TechnicalAgent.class.getName());
+
     private final ClaudeClient claudeClient;
     private final VectorStore vectorStore;
 
@@ -48,24 +51,27 @@ public class TechnicalAgent implements Agent {
 
     @Override
     public String handle(String userMessage, ConversationSession session) {
-        // Retrieve relevant documentation chunks
-        List<DocumentChunk> relevantChunks = vectorStore.search(userMessage);
-        String context = buildContext(relevantChunks);
-        String systemPrompt = String.format(SYSTEM_PROMPT_TEMPLATE, context);
+        logger.info("TechnicalAgent handling turn.");
+        String systemPrompt = buildSystemPrompt(userMessage);
 
-        // Call Claude with the full shared history (already ends with the user message)
         ClaudeResponse response = claudeClient.sendMessage(
-            systemPrompt,
-            session.getHistory().getMessages(),
-            null,
-            AppConfig.AGENT_MAX_TOKENS
+            systemPrompt, session.getHistory().getMessages(), null, AppConfig.AGENT_MAX_TOKENS
         );
 
         String text = response.getFirstTextContent();
         if (text == null || text.isBlank()) {
+            logger.warning("Empty response from Claude in TechnicalAgent.");
             return "I was unable to generate a response. Please try rephrasing your question.";
         }
         return text;
+    }
+
+    // Retrieves relevant documentation chunks and formats them into the system prompt.
+    private String buildSystemPrompt(String userMessage) {
+        List<DocumentChunk> relevantChunks = vectorStore.search(userMessage);
+        logger.fine("Retrieved " + relevantChunks.size() + " relevant chunks for query.");
+        String context = buildContext(relevantChunks);
+        return String.format(SYSTEM_PROMPT_TEMPLATE, context);
     }
 
     private String buildContext(List<DocumentChunk> chunks) {
