@@ -47,7 +47,7 @@ User input → CLI → Orchestrator → RouterClassifier (Claude, ~10 tokens)
 
 ```bash
 # 1. Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/MJCarvajalQ/conversational-ai-support
 cd conversational-ai-support
 
 # 2. Add your API key
@@ -153,9 +153,8 @@ If you need a higher rate limit, contact support to request a quota increase.
 ```
 You: I think I was charged twice last month. My customer ID is CUST-002.
 
-[Router → billing]
-[Tool] get_billing_history → INV-2026-0201: $99.00 Paid, INV-2026-0301: $99.00 Paid
-[Tool] open_refund_case   → RF-A1B2C3D4 opened, estimated 3–5 business days
+[INFO] Router decision: billing
+[INFO] BillingAgent handling turn (iteration cap: 5)
 
 Agent: I've reviewed your billing history for customer CUST-002. I can see two
 charges were recorded. I have opened refund case RF-A1B2C3D4 for the duplicate
@@ -167,12 +166,16 @@ like me to send the refund form to your email address?
 ```
 You: What is my current plan?
 
-[Router → billing]
+[INFO] Router decision: billing
+[INFO] BillingAgent handling turn (iteration cap: 5)
+
 Agent: Your current plan is the Pro Plan at $99/month. The next renewal date is 2026-04-15.
 
 You: How do I configure the API timeout for the Pro Plan?
 
-[Router → technical]
+[INFO] Router decision: technical
+[INFO] TechnicalAgent handling turn.
+
 Agent: According to configuration.md, you can configure the HTTP timeout using
 the http.timeout setting in config.yaml or the HTTP_TIMEOUT_MS environment
 variable. For the Pro Plan's higher request volume, a value between 30,000 and
@@ -183,7 +186,8 @@ variable. For the Pro Plan's higher request volume, a value between 30,000 and
 ```
 You: What's the weather like today?
 
-[Router → out_of_scope]
+[INFO] Router decision: out_of_scope
+
 Agent: I'm sorry, I can only assist with technical or billing questions.
 For other inquiries, please contact our general support team.
 ```
