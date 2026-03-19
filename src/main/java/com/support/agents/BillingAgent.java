@@ -12,6 +12,7 @@ import com.support.tools.ToolResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 /**
  * Handles billing questions using a synchronous tool-calling loop.
@@ -43,6 +44,8 @@ public class BillingAgent implements Agent {
         "- If a tool returns an error, explain the issue to the customer and suggest next steps.\n" +
         "- If you need information from the customer (such as their customer ID or email), ask for it.";
 
+    private static final Logger logger = Logger.getLogger(BillingAgent.class.getName());
+
     private static final String CONTENT_TYPE_TOOL_USE = "tool_use";
     private static final String ROLE_ASSISTANT        = "assistant";
     private static final String ROLE_USER             = "user";
@@ -57,6 +60,7 @@ public class BillingAgent implements Agent {
 
     @Override
     public String handle(String userMessage, ConversationSession session) {
+        logger.info("BillingAgent handling turn (iteration cap: " + AppConfig.MAX_TOOL_ITERATIONS + ")");
         // Start working history from the shared session history.
         // The session history already ends with the user message (added by Orchestrator).
         List<Message> workingHistory = new ArrayList<>(session.getHistory().getMessages());
@@ -78,10 +82,9 @@ public class BillingAgent implements Agent {
                 List<ContentBlock> toolResults = new ArrayList<>();
                 for (ContentBlock block : response.getContent()) {
                     if (CONTENT_TYPE_TOOL_USE.equals(block.getType())) {
-                        System.out.println("[Tool] Calling: " + block.getName() +
-                            " with input: " + block.getInput());
+                        logger.fine("Tool call: " + block.getName() + " | input: " + block.getInput());
                         ToolResult result = toolExecutor.execute(block.getName(), block.getInput());
-                        System.out.println("[Tool] Result: " + result.getContent());
+                        logger.fine("Tool result: " + result.getContent());
                         toolResults.add(ContentBlock.toolResult(block.getId(), result.getContent()));
                     }
                 }
@@ -93,12 +96,14 @@ public class BillingAgent implements Agent {
                 // stop_reason == "end_turn" — extract the final text response
                 String finalResponse = response.getFirstTextContent();
                 if (finalResponse == null || finalResponse.isBlank()) {
+                    logger.warning("Empty final response from Claude in BillingAgent.");
                     return "I was unable to complete your billing request. Please try again.";
                 }
                 return finalResponse;
             }
         }
 
+        logger.warning("Max tool iterations reached without end_turn response.");
         return "I was unable to complete your request within the allowed steps. " +
                "Please contact our support team directly for assistance.";
     }

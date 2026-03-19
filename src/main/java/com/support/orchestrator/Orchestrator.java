@@ -4,6 +4,7 @@ import com.support.agents.Agent;
 import com.support.conversation.ConversationSession;
 import com.support.conversation.Message;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 /**
  * Central coordinator for each conversation turn.
@@ -19,6 +20,8 @@ import java.util.Objects;
  * ConversationHistory.add() enforces this and will throw if violated.
  */
 public class Orchestrator {
+
+    private static final Logger logger = Logger.getLogger(Orchestrator.class.getName());
 
     private static final String OUT_OF_SCOPE_RESPONSE =
         "I'm sorry, I can only assist with technical or billing questions. " +
@@ -47,7 +50,7 @@ public class Orchestrator {
 
         // Step 2: Classify
         String route = router.classify(userMessage, session);
-        System.out.println("[Router] → " + route);
+        logger.info("Router decision: " + route);
 
         // Step 3: Route to the appropriate agent
         String response;

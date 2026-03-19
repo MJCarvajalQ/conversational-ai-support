@@ -1,6 +1,7 @@
 package com.support.rag;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * TF-IDF embedding service.
@@ -17,6 +18,8 @@ import java.util.*;
  * and is recommended for a production environment.
  */
 public class EmbeddingService {
+
+    private static final Logger logger = Logger.getLogger(EmbeddingService.class.getName());
 
     private Map<String, Integer> termIndex; // term → position in vector
     private double[] idfWeights;            // IDF weight per term
@@ -56,8 +59,7 @@ public class EmbeddingService {
             idfWeights[idx] = Math.log((double)(totalDocs + 1) / (df + 1)) + 1.0;
         }
 
-        System.out.println("[RAG] Vocabulary built: " + vocabSize + " unique terms across "
-            + totalDocs + " chunks.");
+        logger.info("Vocabulary built: " + vocabSize + " unique terms across " + totalDocs + " chunks.");
     }
 
     /**
