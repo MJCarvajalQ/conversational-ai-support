@@ -8,9 +8,9 @@ import java.util.logging.Logger;
  *
  * Workflow:
  *   1. buildVocabulary(chunks)  — scans all chunks, builds term→index map + IDF weights.
- *   2. embedAll(chunks)         — computes and stores a TF-IDF vector on each chunk.
- *   3. embedQuery(text)         — produces a TF-IDF vector for a user query at runtime.
- *   4. cosineSimilarity(a, b)   — measures relevance between query and chunk vectors.
+ *   2. cosineSimilarity(a, b)   — measures relevance between query and chunk vectors.
+ *
+ * Vector computation (computeVector) and chunk embedding are handled by VectorStore.
  *
  * Limitation: TF-IDF relies on exact keyword overlap. "authentication errors" and
  * "login failures" are not considered similar unless both terms appear in the same chunk.
@@ -63,22 +63,6 @@ public class EmbeddingService {
     }
 
     /**
-     * Step 2: Compute and assign TF-IDF vectors to all chunks.
-     */
-    public void embedAll(List<DocumentChunk> chunks) {
-        for (DocumentChunk chunk : chunks) {
-            chunk.setVector(computeVector(chunk.getText()));
-        }
-    }
-
-    /**
-     * Step 3: Compute a TF-IDF vector for a user query string.
-     */
-    public double[] embedQuery(String query) {
-        return computeVector(query);
-    }
-
-    /**
      * Cosine similarity between two vectors. Returns 0 if either vector is zero.
      */
     public double cosineSimilarity(double[] a, double[] b) {
@@ -92,9 +76,13 @@ public class EmbeddingService {
         return dot / (Math.sqrt(magA) * Math.sqrt(magB));
     }
 
-    // --- private helpers ---
+    // --- package-private helpers (used by VectorStore) ---
 
-    private double[] computeVector(String text) {
+    Map<String, Integer> getTermIndex() { return termIndex; }
+    double[] getIdfWeights()            { return idfWeights; }
+    int getVocabSize()                  { return vocabSize; }
+
+    double[] computeVector(String text) {
         List<String> tokens = tokenize(text);
         double[] vector = new double[vocabSize];
 
@@ -117,7 +105,7 @@ public class EmbeddingService {
     }
 
     /** Lowercase + split on non-alphanumeric characters. Filters single-char tokens. */
-    private List<String> tokenize(String text) {
+    List<String> tokenize(String text) {
         String[] rawTokens = text.toLowerCase().split("[^a-z0-9]+");
         List<String> tokens = new ArrayList<>();
         for (String t : rawTokens) {

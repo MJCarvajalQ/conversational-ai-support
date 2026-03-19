@@ -19,8 +19,7 @@ import java.util.List;
  *   1. Load all docs/*.md files
  *   2. Chunk each document
  *   3. Build TF-IDF vocabulary across all chunks
- *   4. Embed all chunks (compute TF-IDF vectors)
- *   5. Store chunks in VectorStore
+ *   4. Compute TF-IDF vectors and store chunks in VectorStore
  *   6. Instantiate Claude client, tools, agents, router, orchestrator
  *   7. Start the CLI conversation loop
  */
@@ -44,17 +43,13 @@ public class Main {
             }
             System.out.println("[Boot] Total chunks created: " + allChunks.size());
 
-            // --- Step 3 & 4: Build TF-IDF vocabulary and embed all chunks ---
+            // --- Step 3: Build TF-IDF vocabulary ---
             EmbeddingService embeddingService = new EmbeddingService();
             embeddingService.buildVocabulary(allChunks);
-            embeddingService.embedAll(allChunks);
 
-            // --- Step 5: Populate VectorStore ---
+            // --- Step 4 & 5: Compute vectors and populate VectorStore ---
             VectorStore vectorStore = new VectorStore(embeddingService);
-            for (DocumentChunk chunk : allChunks) {
-                vectorStore.addChunk(chunk);
-            }
-            System.out.println("[Boot] VectorStore ready with " + vectorStore.size() + " chunks.");
+            vectorStore.addAll(allChunks);
 
             // --- Step 6: Wire up components ---
             ClaudeClient claudeClient = new ClaudeClient();
