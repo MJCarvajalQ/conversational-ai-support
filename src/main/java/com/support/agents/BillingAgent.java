@@ -42,7 +42,9 @@ public class BillingAgent implements Agent {
         "This ensures full context is preserved across the conversation.\n" +
         "- Be professional, empathetic, and clear.\n" +
         "- If a tool returns an error, explain the issue to the customer and suggest next steps.\n" +
-        "- If you need information from the customer (such as their customer ID or email), ask for it.";
+        "- If you need information from the customer (such as their customer ID or email), ask for it.\n" +
+        "- If the user's message is a simple acknowledgement (e.g. 'yes', 'no', 'ok', 'thanks', 'no thanks'), " +
+        "respond briefly and naturally. Do not call any tools or re-fetch data.";
 
     private static final Logger logger = Logger.getLogger(BillingAgent.class.getName());
 
