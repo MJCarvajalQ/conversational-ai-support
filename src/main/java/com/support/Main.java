@@ -26,6 +26,7 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
+        System.setProperty("java.util.logging.SimpleFormatter.format", "[%4$s] %5$s%n");
         try {
             System.out.println("[Boot] Starting Conversational AI Support System...");
 
