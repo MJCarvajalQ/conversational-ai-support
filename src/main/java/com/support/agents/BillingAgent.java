@@ -43,6 +43,10 @@ public class BillingAgent implements Agent {
         "- If a tool returns an error, explain the issue to the customer and suggest next steps.\n" +
         "- If you need information from the customer (such as their customer ID or email), ask for it.";
 
+    private static final String CONTENT_TYPE_TOOL_USE = "tool_use";
+    private static final String ROLE_ASSISTANT        = "assistant";
+    private static final String ROLE_USER             = "user";
+
     private final ClaudeClient claudeClient;
     private final ToolExecutor toolExecutor;
 
@@ -63,17 +67,17 @@ public class BillingAgent implements Agent {
                 SYSTEM_PROMPT,
                 workingHistory,
                 toolSchemas,
-                1024
+                AppConfig.AGENT_MAX_TOKENS
             );
 
             if (response.isToolUse()) {
                 // Add the assistant's tool_use response to working history
-                workingHistory.add(new Message("assistant", response.getContent()));
+                workingHistory.add(new Message(ROLE_ASSISTANT, response.getContent()));
 
                 // Execute each tool call and collect results
                 List<ContentBlock> toolResults = new ArrayList<>();
                 for (ContentBlock block : response.getContent()) {
-                    if ("tool_use".equals(block.getType())) {
+                    if (CONTENT_TYPE_TOOL_USE.equals(block.getType())) {
                         System.out.println("[Tool] Calling: " + block.getName() +
                             " with input: " + block.getInput());
                         ToolResult result = toolExecutor.execute(block.getName(), block.getInput());
@@ -83,7 +87,7 @@ public class BillingAgent implements Agent {
                 }
 
                 // Add tool results as a user message to working history
-                workingHistory.add(new Message("user", toolResults));
+                workingHistory.add(new Message(ROLE_USER, toolResults));
 
             } else {
                 // stop_reason == "end_turn" — extract the final text response

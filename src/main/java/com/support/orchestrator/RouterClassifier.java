@@ -21,6 +21,14 @@ import java.util.Objects;
  */
 public class RouterClassifier {
 
+    public static final String ROUTE_TECHNICAL    = "technical";
+    public static final String ROUTE_BILLING      = "billing";
+    public static final String ROUTE_OUT_OF_SCOPE = "out_of_scope";
+
+    private static final int CLASSIFIER_MAX_TOKENS   = 10;
+    private static final int CLASSIFIER_CONTEXT_TURNS = 2;
+    private static final int SHORT_MESSAGE_MAX_LENGTH = 10;
+
     private static final String SYSTEM_PROMPT =
         "You are a message routing classifier for a software support service.\n\n" +
         "Classify the user's message into exactly one of these categories:\n" +
@@ -50,7 +58,7 @@ public class RouterClassifier {
         // Include the previous assistant message (if any) for follow-up context,
         // then the current user message (always last in shared history)
         int size = allMessages.size();
-        if (size >= 2) {
+        if (size >= CLASSIFIER_CONTEXT_TURNS) {
             classifierMessages.add(allMessages.get(size - 2)); // previous assistant turn
         }
         classifierMessages.add(allMessages.get(size - 1)); // current user message
@@ -59,21 +67,22 @@ public class RouterClassifier {
             SYSTEM_PROMPT,
             classifierMessages,
             null,
-            10  // only needs one word
+            CLASSIFIER_MAX_TOKENS
         );
 
         String classification = response.getFirstTextContent();
-        if (classification == null) return "out_of_scope";
+        if (classification == null) return ROUTE_OUT_OF_SCOPE;
 
         classification = classification.trim().toLowerCase();
         classification = switch (classification) {
-            case "technical", "billing" -> classification;
-            default -> "out_of_scope";
+            case "technical" -> ROUTE_TECHNICAL;
+            case "billing"   -> ROUTE_BILLING;
+            default          -> ROUTE_OUT_OF_SCOPE;
         };
 
         // Fallback: short messages with no topic keywords (e.g. "No", "Yes", "Ok")
         // stay with the last active agent instead of triggering the out-of-scope wall.
-        if ("out_of_scope".equals(classification) && isShortMessage(userMessage)) {
+        if (ROUTE_OUT_OF_SCOPE.equals(classification) && isShortMessage(userMessage)) {
             String lastAgent = session.getLastActiveAgent();
             if (lastAgent != null) return lastAgent;
         }
@@ -87,6 +96,6 @@ public class RouterClassifier {
             .replace("<user_input>", "")
             .replace("</user_input>", "")
             .trim();
-        return stripped.length() <= 10;
+        return stripped.length() <= SHORT_MESSAGE_MAX_LENGTH;
     }
 }

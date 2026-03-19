@@ -15,6 +15,7 @@ public class AppConfig {
     public static final int MAX_TOOL_ITERATIONS = 5;
     public static final int TOP_K_CHUNKS = 3;
     public static final double MAX_REFUND_AMOUNT = 1000.0;
+    public static final int AGENT_MAX_TOKENS = 1024;
 
     public static final String CLAUDE_API_KEY;
     public static final String ANTHROPIC_VERSION;

@@ -52,12 +52,12 @@ public class Orchestrator {
         // Step 3: Route to the appropriate agent
         String response;
         switch (route) {
-            case "technical" -> {
-                session.setLastActiveAgent("technical");
+            case RouterClassifier.ROUTE_TECHNICAL -> {
+                session.setLastActiveAgent(RouterClassifier.ROUTE_TECHNICAL);
                 response = technicalAgent.handle(userMessage, session);
             }
-            case "billing" -> {
-                session.setLastActiveAgent("billing");
+            case RouterClassifier.ROUTE_BILLING -> {
+                session.setLastActiveAgent(RouterClassifier.ROUTE_BILLING);
                 response = billingAgent.handle(userMessage, session);
             }
             default -> response = OUT_OF_SCOPE_RESPONSE;

@@ -6,6 +6,7 @@ import com.support.conversation.ConversationSession;
 import com.support.rag.DocumentChunk;
 import com.support.rag.VectorStore;
 
+import com.support.config.AppConfig;
 import java.util.List;
 import java.util.Objects;
 
@@ -57,7 +58,7 @@ public class TechnicalAgent implements Agent {
             systemPrompt,
             session.getHistory().getMessages(),
             null,
-            1024
+            AppConfig.AGENT_MAX_TOKENS
         );
 
         String text = response.getFirstTextContent();
