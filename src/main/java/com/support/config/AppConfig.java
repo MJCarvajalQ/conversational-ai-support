@@ -17,6 +17,7 @@ public class AppConfig {
     public static final double MAX_REFUND_AMOUNT = 1000.0;
 
     public static final String CLAUDE_API_KEY;
+    public static final String ANTHROPIC_VERSION;
 
     static {
         Properties props = new Properties();
@@ -33,6 +34,11 @@ public class AppConfig {
             throw new RuntimeException("anthropic.api.key is not set in config.properties");
         }
         CLAUDE_API_KEY = key;
+        String version = props.getProperty("anthropic.version", "").trim();
+        if (version.isEmpty()) {
+            throw new RuntimeException("anthropic.version is not set in config.properties");
+        }
+        ANTHROPIC_VERSION = version;
     }
 
     private AppConfig() {}

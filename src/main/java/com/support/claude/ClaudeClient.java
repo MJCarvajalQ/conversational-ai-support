@@ -65,7 +65,7 @@ public class ClaudeClient {
                 .uri(URI.create(API_URL))
                 .header("Content-Type", "application/json")
                 .header("x-api-key", AppConfig.CLAUDE_API_KEY)
-                .header("anthropic-version", "2023-06-01")
+                .header("anthropic-version", AppConfig.ANTHROPIC_VERSION)
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
 
